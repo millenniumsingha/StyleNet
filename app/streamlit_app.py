@@ -50,17 +50,24 @@ st.markdown("""
 @st.cache_resource
 def load_classifier():
     """Load the classifier model (cached)."""
-    # Check if model exists, if not train it
-    if not MODEL_PATH.exists():
-        st.info("⚠️ Model not found. Training for the first time... This may take a minute.")
-        with st.spinner("Training model..."):
-            from src.train import train_model
-            # Train with slightly fewer epochs for faster cloud startup, or full 15
-            train_model(model_type='cnn', epochs=10)
-            st.success("Training complete!")
-
     classifier = FashionClassifier()
-    classifier.load_model()
+    
+    # Try to load the model, if it fails (missing or corrupt), train it
+    try:
+        classifier.load_model()
+    except Exception as e:
+        st.warning(f"Model not found or corrupt ({str(e)}). Training a new one...")
+        st.info("Training involves downloading data and training a CNN. This will take 1-2 minutes.")
+        
+        with st.spinner("Training model (~2 mins)..."):
+            from src.train import train_model
+            # Train with 5 epochs for faster cloud startup
+            train_model(model_type='cnn', epochs=5)
+            
+        st.success("Training complete! Loading model...")
+        # Try loading again
+        classifier.load_model()
+        
     return classifier
 
 
