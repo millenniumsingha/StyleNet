@@ -12,7 +12,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.config import CLASS_NAMES
+from src.config import CLASS_NAMES, MODEL_PATH
 from src.predict import FashionClassifier
 
 # Page config
@@ -50,6 +50,15 @@ st.markdown("""
 @st.cache_resource
 def load_classifier():
     """Load the classifier model (cached)."""
+    # Check if model exists, if not train it
+    if not MODEL_PATH.exists():
+        st.info("⚠️ Model not found. Training for the first time... This may take a minute.")
+        with st.spinner("Training model..."):
+            from src.train import train_model
+            # Train with slightly fewer epochs for faster cloud startup, or full 15
+            train_model(model_type='cnn', epochs=10)
+            st.success("Training complete!")
+
     classifier = FashionClassifier()
     classifier.load_model()
     return classifier
