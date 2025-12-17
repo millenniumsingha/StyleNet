@@ -4,8 +4,17 @@
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15+-orange.svg)](https://tensorflow.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
 
 A production-ready image classification system for the Fashion MNIST dataset, featuring a CNN model with ~92% accuracy, REST API, and interactive web interface.
+
+## 🔴 Live Demo
+
+You can deploy this application directly to Streamlit Cloud to see it in action:
+
+[![Deploy to Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
+
+*Note: After deploying, update the link above to your specific app URL.*
 
 ![Demo](images/prediction_5.png)
 
