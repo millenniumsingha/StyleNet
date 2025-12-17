@@ -1,0 +1,184 @@
+"""FastAPI application for Fashion MNIST classifier."""
+
+import io
+import numpy as np
+from PIL import Image
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from src import __version__
+from src.config import CLASS_NAMES, MODEL_PATH
+from src.predict import get_classifier
+from api.schemas import (
+    PredictionResponse, 
+    HealthResponse, 
+    ClassNamesResponse,
+    PredictionResult
+)
+
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="Fashion MNIST Classifier API",
+    description="""
+    A production-ready API for classifying fashion items using a CNN model.
+    
+    ## Features
+    - Upload images of clothing items
+    - Get predictions with confidence scores
+    - View all class probabilities
+    
+    ## Supported Classes
+    T-shirt/top, Trouser, Pullover, Dress, Coat, Sandal, Shirt, Sneaker, Bag, Ankle boot
+    """,
+    version=__version__,
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Load model on startup."""
+    try:
+        classifier = get_classifier()
+        classifier.load_model()
+        print("Model loaded successfully!")
+    except Exception as e:
+        print(f"Warning: Could not load model on startup: {e}")
+
+
+@app.get("/", response_model=dict)
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "name": "Fashion MNIST Classifier API",
+        "version": __version__,
+        "docs": "/docs",
+        "health": "/health"
+    }
+
+
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    """Check API and model health status."""
+    classifier = get_classifier()
+    model_loaded = classifier.model is not None
+    
+    return HealthResponse(
+        status="healthy",
+        model_loaded=model_loaded,
+        version=__version__
+    )
+
+
+@app.get("/classes", response_model=ClassNamesResponse)
+async def get_classes():
+    """Get list of all class names."""
+    return ClassNamesResponse(
+        class_names=CLASS_NAMES,
+        num_classes=len(CLASS_NAMES)
+    )
+
+
+@app.post("/predict", response_model=PredictionResponse)
+async def predict(file: UploadFile = File(..., description="Image file to classify")):
+    """
+    Classify a clothing item image.
+    
+    Upload an image of a clothing item and get predictions for what type it is.
+    
+    - **file**: Image file (JPEG, PNG, etc.)
+    
+    Returns prediction with confidence scores for all classes.
+    """
+    # Validate file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, 
+            detail="File must be an image"
+        )
+    
+    try:
+        # Read and process image
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        
+        # Convert to numpy array
+        image_array = np.array(image)
+        
+        # Get prediction
+        classifier = get_classifier()
+        result = classifier.predict(image_array)
+        
+        # Format response
+        return PredictionResponse(
+            success=True,
+            predicted_class=result['predicted_class'],
+            predicted_index=result['predicted_index'],
+            confidence=result['confidence'],
+            top_predictions=[
+                PredictionResult(**pred) for pred in result['top_predictions']
+            ],
+            all_probabilities=result['all_probabilities']
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(e)}"
+        )
+
+
+@app.post("/predict/batch")
+async def predict_batch(files: list[UploadFile] = File(...)):
+    """
+    Classify multiple clothing item images.
+    
+    Upload multiple images and get predictions for each.
+    Maximum 10 images per request.
+    """
+    if len(files) > 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum 10 images per request"
+        )
+    
+    results = []
+    classifier = get_classifier()
+    
+    for file in files:
+        try:
+            contents = await file.read()
+            image = Image.open(io.BytesIO(contents))
+            image_array = np.array(image)
+            
+            result = classifier.predict(image_array)
+            results.append({
+                "filename": file.filename,
+                "success": True,
+                **result
+            })
+        except Exception as e:
+            results.append({
+                "filename": file.filename,
+                "success": False,
+                "error": str(e)
+            })
+    
+    return {"predictions": results}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
