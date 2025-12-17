@@ -50,23 +50,68 @@ st.markdown("""
 @st.cache_resource
 def load_classifier():
     """Load the classifier model (cached)."""
+    import os
+    
+    # Ensure models directory exists
+    if not MODELS_DIR.exists():
+        MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
     classifier = FashionClassifier()
     
-    # Try to load the model, if it fails (missing or corrupt), train it
+    # Try to load, if fails, train
     try:
         classifier.load_model()
     except Exception as e:
-        st.warning(f"Model not found or corrupt ({str(e)}). Training a new one...")
-        st.info("Training involves downloading data and training a CNN. This will take 1-2 minutes.")
+        # Debug info
+        st.warning(f"⚠️ Model failed to load: {str(e)}")
         
-        with st.spinner("Training model (~2 mins)..."):
+        # Check if file exists but is corrupt (e.g. 0 bytes)
+        if MODEL_PATH.exists():
+            st.write(f"Debug: Deleting existing corrupt file ({MODEL_PATH.stat().st_size} bytes)...")
+            try:
+                os.remove(MODEL_PATH)
+            except:
+                pass
+
+        st.info("🔄 Starting automatic training (this takes ~1-2 mins)...")
+        
+        status_text = st.empty()
+        status_text.text("Training CNN model...")
+        
+        try:
+            # Try training CNN
             from src.train import train_model
-            # Train with 5 epochs for faster cloud startup
-            train_model(model_type='cnn', epochs=5)
+            with st.spinner("Training CNN..."):
+                train_model(model_type='cnn', epochs=5)
+            status_text.text("Training Complete!")
+        except Exception as train_error:
+            st.error(f"CNN Training failed: {str(train_error)}")
+            st.info("Falling back to Simple model...")
             
-        st.success("Training complete! Loading model...")
-        # Try loading again
-        classifier.load_model()
+            # Fallback to Simple model
+            try:
+                with st.spinner("Training Simple Model..."):
+                    train_model(model_type='simple', epochs=5)
+                    # Rename simple model to expected path if needed, 
+                    # OR just update classifier to load simple model
+                    simple_path = MODELS_DIR / "fashion_mnist_simple.keras"
+                    if simple_path.exists():
+                        # Update config in memory or just rename file for now to match expectation
+                        import shutil
+                        shutil.copy(simple_path, MODEL_PATH)
+            except Exception as simple_error:
+                st.error(f"All training attempts failed. Error: {str(simple_error)}")
+                st.stop()
+
+        # Check if file exists now
+        if MODEL_PATH.exists():
+            st.success(f"Model created! Size: {MODEL_PATH.stat().st_size / 1024:.1f} KB")
+            classifier.load_model()
+        else:
+            st.error(f"❌ Verification Failed: Model file not found at {MODEL_PATH} after training.")
+            st.write(f"Current Directory: {os.getcwd()}")
+            st.write(f"Directory Contents: {os.listdir(MODELS_DIR) if MODELS_DIR.exists() else 'Dir missing'}")
+            st.stop()
         
     return classifier
 
