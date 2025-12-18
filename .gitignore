@@ -35,6 +35,7 @@ checkpoint
 # Logs
 *.log
 logs/
+mlruns/
 
 # OS
 .DS_Store

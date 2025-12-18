@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+import mlflow
+import mlflow.keras
 
 from src.config import (
     BATCH_SIZE, EPOCHS, MODEL_PATH, MODELS_DIR,
@@ -79,26 +81,52 @@ def train_model(model_type: str = 'cnn', epochs: int = EPOCHS) -> dict:
     
     # Train
     print(f"\nTraining for {epochs} epochs...")
-    history = model.fit(
-        train_images, train_labels,
-        batch_size=BATCH_SIZE,
-        epochs=epochs,
-        validation_split=VALIDATION_SPLIT,
-        callbacks=callbacks,
-        verbose=1
-    )
     
-    # Evaluate
-    print("\nEvaluating on test set...")
-    test_loss, test_accuracy = model.evaluate(test_images, test_labels, verbose=0)
-    print(f"Test accuracy: {test_accuracy:.4f}")
-    print(f"Test loss: {test_loss:.4f}")
+    # Enable MLflow autologging (optional, but manual logging gives more control as per plan)
+    # mlflow.tensorflow.autolog()
     
-    # Save model
-    model_save_path = MODEL_PATH if model_type == 'cnn' else \
-        MODELS_DIR / "fashion_mnist_simple.keras"
-    model.save(model_save_path)
-    print(f"\nModel saved to: {model_save_path}")
+    with mlflow.start_run():
+        # Log parameters
+        mlflow.log_params({
+            "model_type": model_type,
+            "epochs": epochs,
+            "batch_size": BATCH_SIZE,
+            "validation_split": VALIDATION_SPLIT,
+            "optimizer": "adam",
+            "loss": "sparse_categorical_crossentropy"
+        })
+
+        history = model.fit(
+            train_images, train_labels,
+            batch_size=BATCH_SIZE,
+            epochs=epochs,
+            validation_split=VALIDATION_SPLIT,
+            callbacks=callbacks,
+            verbose=1
+        )
+        
+        # Evaluate
+        print("\nEvaluating on test set...")
+        test_loss, test_accuracy = model.evaluate(test_images, test_labels, verbose=0)
+        print(f"Test accuracy: {test_accuracy:.4f}")
+        print(f"Test loss: {test_loss:.4f}")
+        
+        # Log final metrics
+        mlflow.log_metrics({
+            "test_accuracy": test_accuracy,
+            "test_loss": test_loss,
+            "final_train_accuracy": float(history.history['accuracy'][-1]),
+            "final_val_accuracy": float(history.history['val_accuracy'][-1])
+        })
+        
+        # Save model locally (legacy support)
+        model_save_path = MODEL_PATH if model_type == 'cnn' else \
+            MODELS_DIR / "fashion_mnist_simple.keras"
+        model.save(model_save_path)
+        print(f"\nModel saved to: {model_save_path}")
+
+        # Log model to MLflow
+        mlflow.keras.log_model(model, "model")
     
     # Save training metadata
     metadata = {

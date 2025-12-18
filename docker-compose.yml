@@ -38,8 +38,24 @@ services:
     container_name: fashion-mnist-train
     volumes:
       - ./models:/app/models
+      # Mount mlruns so we can see them locally even if logged to server
+      - ./mlruns:/app/mlruns 
     environment:
       - PYTHONPATH=/app
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     command: python -m src.train --model cnn --epochs 15
+    depends_on:
+      - mlflow
     profiles:
       - training
+
+  # MLflow Tracking Server
+  mlflow:
+    build: .
+    container_name: fashion-mnist-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlflow.db:/app/mlflow.db
+    command: mlflow server --backend-store-uri sqlite:///app/mlflow.db --default-artifact-root /app/mlruns --host 0.0.0.0 --port 5000
