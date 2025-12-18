@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src import __version__
-from src.config import CLASS_NAMES, MODEL_PATH
+from src.config import CLASS_NAMES, MODEL_PATH, MODELS_DIR
 from src.predict import get_classifier
 from api.schemas import (
     PredictionResponse, 
