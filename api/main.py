@@ -41,6 +41,13 @@ def log_prediction(confidence: float, predicted_index: int):
             predicted_index
         ])
 
+import os
+import random
+
+# A/B Testing Configuration
+AB_TEST_RATIO = float(os.getenv("AB_TEST_RATIO", "0.0"))
+CANARY_MODEL_PATH = MODELS_DIR / "canary_model.keras"
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Fashion MNIST Classifier API",
@@ -72,11 +79,28 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Load model on startup."""
+    """Load models on startup."""
     try:
+        # Load stable model
         classifier = get_classifier()
         classifier.load_model()
-        print("Model loaded successfully!")
+        print("Stable model loaded successfully!")
+        
+        # Load canary model if ratio > 0
+        if AB_TEST_RATIO > 0:
+            if CANARY_MODEL_PATH.exists():
+                # We need a way to store the canary classifier. 
+                # For simplicity, we'll attach it to the app state or a global dict
+                # But since get_classifier is a singleton pattern, we might need to adjust it
+                # For this implementation, we'll instantiate a second classifier
+                from src.predict import FashionClassifier
+                global canary_classifier
+                canary_classifier = FashionClassifier(model_path=CANARY_MODEL_PATH)
+                canary_classifier.load_model()
+                print(f"Canary model loaded! Traffic ratio: {AB_TEST_RATIO}")
+            else:
+                print(f"Warning: A/B ratio is {AB_TEST_RATIO} but canary model not found at {CANARY_MODEL_PATH}")
+                
     except Exception as e:
         print(f"Warning: Could not load model on startup: {e}")
 
@@ -142,8 +166,19 @@ async def predict(file: UploadFile = File(..., description="Image file to classi
         
         # Get prediction
         classifier = get_classifier()
+        
+        # A/B Routing Logic
+        model_version = "stable"
+        if AB_TEST_RATIO > 0 and 'canary_classifier' in globals() and canary_classifier.model:
+            if random.random() < AB_TEST_RATIO:
+                classifier = canary_classifier
+                model_version = "canary"
+        
         result = classifier.predict(image_array)
         
+        # Log for monitoring
+        log_prediction(result['confidence'], result['predicted_index'])
+
         # Format response
         # Log for monitoring
         log_prediction(result['confidence'], result['predicted_index'])
