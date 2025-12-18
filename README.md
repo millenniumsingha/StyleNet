@@ -176,11 +176,48 @@ python -m src.train --model simple --epochs 10
 
 ## 🚀 Future Improvements
 
-- [ ] Model versioning with MLflow
-- [ ] CI/CD pipeline with GitHub Actions
-- [ ] Kubernetes deployment configs
-- [ ] Model monitoring and drift detection
-- [ ] A/B testing framework
+- [x] Model versioning with MLflow
+- [x] CI/CD pipeline with GitHub Actions
+- [x] Kubernetes deployment configs
+- [x] Model monitoring and drift detection
+- [x] A/B testing framework
+
+## 🔄 CI/CD Pipeline
+
+The project uses GitHub Actions for Continuous Integration and Deployment:
+- **Build & Test**: runs on every push to verify code quality.
+- **Docker Build**: pushes new images to GitHub Container Registry (GHCR) on release.
+
+## 📦 Model Versioning (MLflow)
+
+Experiments are tracked using MLflow.
+```bash
+# Start MLflow server
+docker-compose up -d mlflow
+
+# View dashboard at http://localhost:5000
+```
+
+## 📊 Monitoring (Evidently AI)
+
+Data drift is monitored comparing production traffic against training data.
+- **Drift Logic**: Implemented in `src/monitoring.py`.
+- **Logs**: Predictions are logged to `monitoring/current_data.csv`.
+
+## ☸️ Kubernetes Deployment
+
+Deploy to a cluster using the manifests in `k8s/`:
+```bash
+kubectl apply -f k8s/
+```
+Includes:
+- **API**: 2 Replicas, Health Checks.
+- **Streamlit**: LoadBalancer Service.
+
+## 🔀 A/B Testing
+
+Traffic is routed between `stable` and `canary` models based on environment variables:
+- Set `AB_TEST_RATIO=0.2` to send 20% of traffic to the canary model.
 
 ## 🙏 Acknowledgments
 
