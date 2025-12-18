@@ -182,10 +182,6 @@ python -m src.train --model simple --epochs 10
 - [ ] Model monitoring and drift detection
 - [ ] A/B testing framework
 
-## 📜 License
-
-MIT License
-
 ## 🙏 Acknowledgments
 
 - [Fashion MNIST Dataset](https://github.com/zalandoresearch/fashion-mnist) by Zalando Research
