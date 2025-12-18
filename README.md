@@ -24,8 +24,8 @@ You can deploy this application directly to Streamlit Cloud to see it in action:
 
 ```bash
 # Clone repository
-git clone https://github.com/millenniumsingha/ImageClassification_FashionMNIST.git
-cd ImageClassification_FashionMNIST
+git clone https://github.com/millenniumsingha/StyleNet.git
+cd StyleNet
 
 # Train model and start services
 docker-compose --profile training up train

@@ -1,7 +1,7 @@
 # AI AGENT TASK: Upgrade Fashion MNIST Repository
 
 ## TASK SUMMARY
-Transform https://github.com/millenniumsingha/ImageClassification_FashionMNIST from a basic ML notebook into a production-ready application with CNN model, REST API, and web interface.
+Transform https://github.com/millenniumsingha/StyleNet from a basic ML notebook into a production-ready application with CNN model, REST API, and web interface.
 
 ## EXECUTION STEPS
 
@@ -11,7 +11,7 @@ Transform https://github.com/millenniumsingha/ImageClassification_FashionMNIST f
 mkdir -p src api app tests models notebooks legacy
 
 # Move original notebook
-mv ImageClassification_FashionMNIST.ipynb legacy/
+mv StyleNet.ipynb legacy/
 
 # Create placeholder files
 touch src/__init__.py api/__init__.py tests/__init__.py models/.gitkeep
@@ -78,7 +78,7 @@ git push origin master
 
 ## EXPECTED FINAL STRUCTURE
 ```
-ImageClassification_FashionMNIST/
+StyleNet/
 ├── README.md
 ├── requirements.txt
 ├── Dockerfile
@@ -107,7 +107,7 @@ ImageClassification_FashionMNIST/
 ├── images/
 │   └── (keep existing)
 └── legacy/
-    └── ImageClassification_FashionMNIST.ipynb
+    └── StyleNet.ipynb
 ```
 
 ## SUCCESS CRITERIA

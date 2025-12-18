@@ -5,7 +5,7 @@
 
 ## PROJECT OVERVIEW
 
-**Repository:** https://github.com/millenniumsingha/ImageClassification_FashionMNIST
+**Repository:** https://github.com/millenniumsingha/StyleNet
 
 **Objective:** Transform a basic Fashion MNIST classification project into a production-ready ML application with:
 1. Improved CNN model architecture (target: 92%+ accuracy)
@@ -22,7 +22,7 @@
 Create the following directory structure:
 
 ```
-ImageClassification_FashionMNIST/
+StyleNet/
 ├── README.md                    # New professional README
 ├── requirements.txt             # Python dependencies
 ├── Dockerfile                   # Docker configuration
@@ -61,7 +61,7 @@ ImageClassification_FashionMNIST/
 │   └── (existing prediction images)
 │
 └── legacy/                      # Archive original work
-    └── ImageClassification_FashionMNIST.ipynb  # Original notebook
+    └── StyleNet.ipynb  # Original notebook
 ```
 
 ---
@@ -1357,8 +1357,8 @@ A production-ready image classification system for the Fashion MNIST dataset, fe
 
 ```bash
 # Clone repository
-git clone https://github.com/millenniumsingha/ImageClassification_FashionMNIST.git
-cd ImageClassification_FashionMNIST
+git clone https://github.com/millenniumsingha/StyleNet.git
+cd StyleNet
 
 # Train model and start services
 docker-compose --profile training up train
@@ -1536,7 +1536,7 @@ MIT License
 
 1. **Clone the existing repository**
 2. **Create the new directory structure** as shown in Step 1
-3. **Move the original notebook** to `legacy/ImageClassification_FashionMNIST.ipynb`
+3. **Move the original notebook** to `legacy/StyleNet.ipynb`
 4. **Create all files** with the exact contents provided in Step 2
 5. **Keep existing images** in the `images/` folder
 6. **Create empty `models/.gitkeep`** file

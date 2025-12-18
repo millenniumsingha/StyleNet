@@ -9,7 +9,7 @@ The **Streamlit App** in this repository is designed to run independently (it do
 1.  **Push your latest code to GitHub** (We have already done this).
 2.  Go to [share.streamlit.io](https://share.streamlit.io/) and sign up/login with GitHub.
 3.  Click **"New app"**.
-4.  Select your repository: `millenniumsingha/ImageClassification_FashionMNIST`
+4.  Select your repository: `millenniumsingha/StyleNet`
 5.  Select Branch: `feature/upgrade-to-production`
 6.  Main file path: `app/streamlit_app.py`
 7.  Click **"Deploy!"**
