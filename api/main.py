@@ -17,6 +17,29 @@ from api.schemas import (
     PredictionResult
 )
 
+# Monitoring setup
+import csv
+from pathlib import Path
+from datetime import datetime
+
+MONITORING_DIR = Path("monitoring")
+MONITORING_DIR.mkdir(exist_ok=True)
+CURRENT_DATA_PATH = MONITORING_DIR / "current_data.csv"
+
+def log_prediction(confidence: float, predicted_index: int):
+    """Log prediction metadata for monitoring."""
+    file_exists = CURRENT_DATA_PATH.exists()
+    
+    with open(CURRENT_DATA_PATH, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(['timestamp', 'confidence', 'predicted_class_index'])
+        
+        writer.writerow([
+            datetime.now().isoformat(),
+            confidence,
+            predicted_index
+        ])
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -122,6 +145,10 @@ async def predict(file: UploadFile = File(..., description="Image file to classi
         result = classifier.predict(image_array)
         
         # Format response
+        # Log for monitoring
+        log_prediction(result['confidence'], result['predicted_index'])
+
+        # Format response
         return PredictionResponse(
             success=True,
             predicted_class=result['predicted_class'],
@@ -132,7 +159,6 @@ async def predict(file: UploadFile = File(..., description="Image file to classi
             ],
             all_probabilities=result['all_probabilities']
         )
-        
     except Exception as e:
         raise HTTPException(
             status_code=500,
