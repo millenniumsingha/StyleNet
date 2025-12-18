@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fashion-mnist-streamlit
+  namespace: fashion-mnist
+  labels:
+    app: fashion-mnist-streamlit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fashion-mnist-streamlit
+  template:
+    metadata:
+      labels:
+        app: fashion-mnist-streamlit
+    spec:
+      containers:
+      - name: streamlit
+        image: ghcr.io/millenniumsingha/stylenet:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8501
+        command: ["streamlit", "run", "app/streamlit_app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+        env:
+        - name: API_URL
+          value: "http://fashion-mnist-api:8000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fashion-mnist-streamlit
+  namespace: fashion-mnist
+spec:
+  selector:
+    app: fashion-mnist-streamlit
+  ports:
+  - port: 80
+    targetPort: 8501
+  type: LoadBalancer
