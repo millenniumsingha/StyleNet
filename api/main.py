@@ -176,6 +176,9 @@ async def predict(file: UploadFile = File(..., description="Image file to classi
         
         result = classifier.predict(image_array)
         
+        # Log for monitoring
+        log_prediction(result['confidence'], result['predicted_index'])
+
         # Format response
         # Log for monitoring
         log_prediction(result['confidence'], result['predicted_index'])
